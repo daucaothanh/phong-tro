@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.env
+venv/
+.venv/
+
+# Node / misc
+node_modules/
+.DS_Store
+
+# Docker volumes
+db_data/
+
+# IDE
+.vscode/
+.idea/

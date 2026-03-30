@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Quản Lý Phòng Trọ</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#0f1117;--surface:#1a1d27;--card:#21253a;--border:#2e3250;
+    --primary:#6c63ff;--primary-light:#857dff;--accent:#00d4aa;
+    --danger:#ff4d6d;--warn:#ffb347;--text:#e8eaf6;--muted:#7b82a8;
+    --green:#00d4aa;--red:#ff4d6d;--yellow:#ffb347;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* ── SIDEBAR ── */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+  .logo{padding:28px 24px 20px;border-bottom:1px solid var(--border)}
+  .logo-icon{font-size:28px;margin-bottom:6px}
+  .logo h1{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
+  .logo span{font-size:11px;color:var(--muted)}
+  nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;color:var(--muted);transition:.2s;border:none;background:none;width:100%;text-align:left}
+  .nav-item:hover{background:var(--card);color:var(--text)}
+  .nav-item.active{background:linear-gradient(135deg,rgba(108,99,255,.25),rgba(0,212,170,.15));color:var(--primary-light);border:1px solid rgba(108,99,255,.3)}
+  .nav-item .icon{font-size:18px;width:20px;text-align:center}
+  .sidebar-footer{padding:16px 24px;border-top:1px solid var(--border)}
+  .dev-card{background:var(--card);border-radius:10px;padding:12px;font-size:12px}
+  .dev-card .name{font-weight:700;color:var(--primary-light);margin-bottom:2px}
+  .dev-card .info{color:var(--muted)}
+
+  /* ── MAIN ── */
+  .main{margin-left:240px;padding:32px;min-height:100vh}
+  .page{display:none}
+  .page.active{display:block}
+
+  /* ── PAGE HEADER ── */
+  .page-header{margin-bottom:28px}
+  .page-header h2{font-size:26px;font-weight:800;margin-bottom:4px}
+  .page-header p{color:var(--muted);font-size:14px}
+
+  /* ── STATS ── */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .stat-card.purple::before{background:var(--primary)}
+  .stat-card.green::before{background:var(--green)}
+  .stat-card.red::before{background:var(--red)}
+  .stat-card.yellow::before{background:var(--yellow)}
+  .stat-card.blue::before{background:#4fc3f7}
+  .stat-icon{font-size:28px;margin-bottom:10px}
+  .stat-val{font-size:28px;font-weight:800;margin-bottom:2px}
+  .stat-label{font-size:12px;color:var(--muted)}
+
+  /* ── TABLE ── */
+  .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .table-header{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+  .table-header h3{font-size:15px;font-weight:700}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{background:var(--surface);padding:12px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  td{padding:13px 16px;border-top:1px solid var(--border)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+  .badge.available{background:rgba(0,212,170,.15);color:var(--green)}
+  .badge.occupied{background:rgba(108,99,255,.2);color:var(--primary-light)}
+  .badge.maintenance{background:rgba(255,179,71,.15);color:var(--yellow)}
+
+  /* ── BUTTONS ── */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:.2s}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:var(--primary-light)}
+  .btn-danger{background:rgba(255,77,109,.15);color:var(--red);border:1px solid rgba(255,77,109,.3)}
+  .btn-danger:hover{background:rgba(255,77,109,.25)}
+  .btn-sm{padding:5px 12px;font-size:12px}
+
+  /* ── MODAL ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto}
+  .modal h3{font-size:18px;font-weight:800;margin-bottom:20px}
+  .form-group{margin-bottom:16px}
+  .form-group label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+  .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:inherit;font-size:14px;outline:none;transition:.2s}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary)}
+  .form-group select option{background:var(--card)}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+  /* ── ABOUT ── */
+  .about-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px;max-width:560px}
+  .about-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:20px}
+  .about-name{font-size:24px;font-weight:800;margin-bottom:4px}
+  .about-row{display:flex;gap:10px;margin-bottom:10px;font-size:14px}
+  .about-row .lbl{color:var(--muted);width:100px;flex-shrink:0}
+  .about-row .val{font-weight:600}
+  .divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+  .health-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.3);color:var(--green);padding:8px 18px;border-radius:30px;font-weight:700;font-size:14px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .empty{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+  .price{color:var(--accent);font-weight:700}
+  .room-num{font-weight:800;color:var(--primary-light)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🏠</div>
+    <h1>Phòng Trọ</h1>
+    <span>Hệ thống quản lý</span>
+  </div>
+  <nav>
+    <button class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span> Tổng quan</button>
+    <button class="nav-item" onclick="showPage('rooms')"><span class="icon">🚪</span> Quản lý phòng</button>
+    <button class="nav-item" onclick="showPage('tenants')"><span class="icon">👥</span> Khách thuê</button>
+    <button class="nav-item" onclick="showPage('about')"><span class="icon">👤</span> Thông tin SV</button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="dev-card">
+      <div class="name">Đậu Cao Thanh</div>
+      <div class="info">2251220276 · 22CT2</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h2>📊 Tổng quan</h2>
+      <p>Hệ thống quản lý phòng trọ</p>
+    </div>
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card purple"><div class="stat-icon">🏠</div><div class="stat-val" id="s-total">--</div><div class="stat-label">Tổng phòng</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-val" id="s-avail">--</div><div class="stat-label">Phòng trống</div></div>
+      <div class="stat-card red"><div class="stat-icon">🔑</div><div class="stat-val" id="s-occ">--</div><div class="stat-label">Đang thuê</div></div>
+      <div class="stat-card yellow"><div class="stat-icon">👤</div><div class="stat-val" id="s-ten">--</div><div class="stat-label">Khách thuê</div></div>
+      <div class="stat-card blue"><div class="stat-icon">💰</div><div class="stat-val" id="s-rev">--</div><div class="stat-label">Doanh thu/tháng</div></div>
+    </div>
+  </div>
+
+  <!-- ROOMS -->
+  <div class="page" id="page-rooms">
+    <div class="page-header">
+      <h2>🚪 Quản lý phòng</h2>
+      <p>Danh sách các phòng trọ</p>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Danh sách phòng</h3>
+        <button class="btn btn-primary" onclick="openAddRoom()">＋ Thêm phòng</button>
+      </div>
+      <table>
+        <thead><tr><th>Phòng</th><th>Tầng</th><th>Diện tích</th><th>Giá thuê</th><th>Trạng thái</th><th>Mô tả</th><th>Thao tác</th></tr></thead>
+        <tbody id="room-tbody"><tr><td colspan="7" class="empty">Đang tải...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TENANTS -->
+  <div class="page" id="page-tenants">
+    <div class="page-header">
+      <h2>👥 Khách thuê</h2>
+      <p>Danh sách khách đang thuê phòng</p>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Danh sách khách thuê</h3>
+        <button class="btn btn-primary" onclick="openAddTenant()">＋ Thêm khách</button>
+      </div>
+      <table>
+        <thead><tr><th>Họ tên</th><th>Số điện thoại</th><th>CCCD</th><th>Phòng</th><th>Ngày bắt đầu</th><th>Thao tác</th></tr></thead>
+        <tbody id="tenant-tbody"><tr><td colspan="6" class="empty">Đang tải...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="page" id="page-about">
+    <div class="page-header">
+      <h2>👤 Thông tin sinh viên</h2>
+      <p>Thông tin người phát triển</p>
+    </div>
+    <div class="about-card">
+      <div class="about-avatar">🎓</div>
+      <div class="about-name">Đậu Cao Thanh</div>
+      <hr class="divider"/>
+      <div class="about-row"><span class="lbl">MSSV</span><span class="val">2251220276</span></div>
+      <div class="about-row"><span class="lbl">Lớp</span><span class="val">22CT2</span></div>
+      <div class="about-row"><span class="lbl">Ứng dụng</span><span class="val">Quản Lý Phòng Trọ</span></div>
+      <div class="about-row"><span class="lbl">Tech Stack</span><span class="val">Python Flask · MySQL · Docker</span></div>
+      <hr class="divider"/>
+      <div class="health-badge"><span class="dot"></span> System: OK</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL: ADD ROOM -->
+<div class="modal-overlay" id="modal-room">
+  <div class="modal">
+    <h3>🚪 Thêm phòng mới</h3>
+    <div class="form-group"><label>Số phòng *</label><input id="r-num" placeholder="VD: P101"/></div>
+    <div class="form-group"><label>Tầng *</label><input id="r-floor" type="number" min="1" placeholder="1"/></div>
+    <div class="form-group"><label>Diện tích (m²) *</label><input id="r-area" type="number" step="0.5" placeholder="20"/></div>
+    <div class="form-group"><label>Giá thuê (VNĐ/tháng) *</label><input id="r-price" type="number" placeholder="2500000"/></div>
+    <div class="form-group"><label>Trạng thái</label>
+      <select id="r-status">
+        <option value="available">Phòng trống</option>
+        <option value="occupied">Đang thuê</option>
+        <option value="maintenance">Bảo trì</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Mô tả</label><textarea id="r-desc" rows="2" placeholder="Ghi chú về phòng..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-room')" style="background:var(--card);color:var(--muted)">Hủy</button>
+      <button class="btn btn-primary" onclick="submitRoom()">Lưu phòng</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD TENANT -->
+<div class="modal-overlay" id="modal-tenant">
+  <div class="modal">
+    <h3>👥 Thêm khách thuê</h3>
+    <div class="form-group"><label>Họ và tên *</label><input id="t-name" placeholder="Nguyễn Văn A"/></div>
+    <div class="form-group"><label>Số điện thoại *</label><input id="t-phone" placeholder="0901234567"/></div>
+    <div class="form-group"><label>CCCD *</label><input id="t-cccd" placeholder="079xxxxxxxxx"/></div>
+    <div class="form-group"><label>Phòng</label>
+      <select id="t-room"><option value="">-- Chọn phòng trống --</option></select>
+    </div>
+    <div class="form-group"><label>Ngày bắt đầu *</label><input id="t-date" type="date"/></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-tenant')" style="background:var(--card);color:var(--muted)">Hủy</button>
+      <button class="btn btn-primary" onclick="submitTenant()">Lưu khách</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000';
+
+// ── NAV ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(name==='dashboard') loadStats();
+  if(name==='rooms') loadRooms();
+  if(name==='tenants') loadTenants();
+}
+
+// ── FORMAT ──
+function fmtPrice(v){ return Number(v).toLocaleString('vi-VN') + ' ₫'; }
+function fmtStatus(s){
+  const map={available:'<span class="badge available">Trống</span>',occupied:'<span class="badge occupied">Đang thuê</span>',maintenance:'<span class="badge maintenance">Bảo trì</span>'};
+  return map[s]||s;
+}
+
+// ── STATS ──
+async function loadStats(){
+  const res = await fetch(API+'/api/stats');
+  const d   = await res.json();
+  document.getElementById('s-total').textContent = d.total_rooms;
+  document.getElementById('s-avail').textContent = d.available;
+  document.getElementById('s-occ').textContent   = d.occupied;
+  document.getElementById('s-ten').textContent   = d.total_tenants;
+  document.getElementById('s-rev').textContent   = (d.monthly_revenue/1e6).toFixed(1)+'M';
+}
+
+// ── ROOMS ──
+let roomsCache = [];
+async function loadRooms(){
+  const res = await fetch(API+'/api/rooms');
+  roomsCache = await res.json();
+  const tbody = document.getElementById('room-tbody');
+  if(!roomsCache.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Chưa có phòng nào</td></tr>'; return; }
+  tbody.innerHTML = roomsCache.map(r=>`
+    <tr>
+      <td><span class="room-num">${r.room_number}</span></td>
+      <td>Tầng ${r.floor}</td>
+      <td>${r.area} m²</td>
+      <td class="price">${fmtPrice(r.price)}</td>
+      <td>${fmtStatus(r.status)}</td>
+      <td style="color:var(--muted);font-size:12px">${r.description||'—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRoom(${r.id})">🗑 Xóa</button></td>
+    </tr>`).join('');
+}
+
+function openAddRoom(){ document.getElementById('modal-room').classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+async function submitRoom(){
+  const body = {
+    room_number: document.getElementById('r-num').value,
+    floor:  parseInt(document.getElementById('r-floor').value),
+    area:   parseFloat(document.getElementById('r-area').value),
+    price:  parseInt(document.getElementById('r-price').value),
+    status: document.getElementById('r-status').value,
+    description: document.getElementById('r-desc').value
+  };
+  const res = await fetch(API+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d   = await res.json();
+  if(res.ok){ closeModal('modal-room'); loadRooms(); }
+  else alert('Lỗi: '+d.error);
+}
+
+async function deleteRoom(id){
+  if(!confirm('Xóa phòng này?')) return;
+  await fetch(API+'/api/rooms/'+id,{method:'DELETE'});
+  loadRooms();
+}
+
+// ── TENANTS ──
+async function loadTenants(){
+  const res = await fetch(API+'/api/tenants');
+  const data = await res.json();
+  const tbody = document.getElementById('tenant-tbody');
+  if(!data.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">Chưa có khách thuê</td></tr>'; return; }
+  tbody.innerHTML = data.map(t=>`
+    <tr>
+      <td><strong>${t.full_name}</strong></td>
+      <td>${t.phone}</td>
+      <td style="font-size:12px;color:var(--muted)">${t.cccd}</td>
+      <td>${t.room_number ? '<span class="room-num">'+t.room_number+'</span>' : '—'}</td>
+      <td>${t.start_date||'—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteTenant(${t.id})">🗑 Xóa</button></td>
+    </tr>`).join('');
+}
+
+async function openAddTenant(){
+  // load available rooms
+  const res   = await fetch(API+'/api/rooms');
+  const rooms = await res.json();
+  const sel   = document.getElementById('t-room');
+  sel.innerHTML = '<option value="">-- Không chọn --</option>' +
+    rooms.filter(r=>r.status==='available').map(r=>`<option value="${r.id}">${r.room_number} — ${fmtPrice(r.price)}</option>`).join('');
+  document.getElementById('modal-tenant').classList.add('open');
+}
+
+async function submitTenant(){
+  const body = {
+    full_name:  document.getElementById('t-name').value,
+    phone:      document.getElementById('t-phone').value,
+    cccd:       document.getElementById('t-cccd').value,
+    room_id:    document.getElementById('t-room').value || null,
+    start_date: document.getElementById('t-date').value
+  };
+  const res = await fetch(API+'/api/tenants',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d   = await res.json();
+  if(res.ok){ closeModal('modal-tenant'); loadTenants(); loadStats(); }
+  else alert('Lỗi: '+d.error);
+}
+
+async function deleteTenant(id){
+  if(!confirm('Xóa khách thuê này?')) return;
+  await fetch(API+'/api/tenants/'+id,{method:'DELETE'});
+  loadTenants(); loadStats();
+}
+
+// close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click', e=>{ if(e.target===el) el.classList.remove('open'); });
+});
+
+// init
+loadStats();
+</script>
+</body>
+</html>
